@@ -152,9 +152,9 @@ def gen_issue(user, creation_days_ago, duration):
 
 
 @click.command()
-@click.option("--output", default="jira_issues.json", help="output file")
-@click.option("--project", help="JIRA project")
-@click.option("--useridentifier", help="JIRA user")
+@click.option("--output","-o", default="jira_issues.json", help="output file")
+@click.option("--project","-p", help="JIRA project")
+@click.option("--useridentifier","-u", multiple=True, help="JIRA user")
 def generate_jira_issues(output, project, useridentifier):
     mu = 3
     sigma = 10
@@ -179,16 +179,19 @@ def generate_jira_issues(output, project, useridentifier):
     lookbackweeks = [1, 2, 3, 5, 8, 13, 21, 34, 55]
     issues = []
 
+    lasttime = 0
     for weeksago in lookbackweeks:
         for duration in poisson_sample:
-            issue = gen_issue(useridentifier, (weeksago * 7)+random.randint(0,7), int(duration))
+            userloc = random.randint(0,len(useridentifier)-1)
+            issue = gen_issue(useridentifier[userloc], random.randint(lasttime*7,weeksago*7), int(duration))
             issues.append(issue)
+        lasttime = weeksago
 
-    user = User(name=useridentifier)
+    users = [User(name=uid) for uid in useridentifier]
 
     project = Project(key=project, issues=issues)
 
-    model = Model(users=[user], projects=[project])
+    model = Model(users=users, projects=[project])
 
     print(poisson_sample)
 
